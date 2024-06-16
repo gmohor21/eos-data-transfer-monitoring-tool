@@ -1,0 +1,24 @@
+SELECT sum_total_read_bytes AS strb, sum_total_read_files AS strf, sum_total_vector_read_bytes AS stvrb, sum_total_write_bytes AS stwb, sum_total_write_files AS stwf FROM (SELECT sum(*) FROM processed_input_file GROUP BY time(1d) fill(none) tz('Europe/Paris')) GROUP BY protocol, eos_instance, *
+
+
+SELECT sum_total_read_bytes AS strb, sum_total_read_files AS strf, sum_total_vector_read_bytes AS stvrb, sum_total_write_bytes AS stwb, sum_total_write_files AS stwf INTO aggregated_data FROM (SELECT sum(*) FROM processed_input_file GROUP BY time(1d) fill(none) tz('Europe/Paris')) GROUP BY protocol, eos_instance, *
+
+
+SELECT sum_total_read_bytes AS strb, sum_total_read_files AS strf, sum_total_vector_read_bytes AS stvrb, sum_total_write_bytes AS stwb, sum_total_write_files AS stwf INTO prod..aggregated_data FROM (SELECT sum(*) FROM processed_input_file GROUP BY time(1d) fill(none) tz('Europe/Paris')) GROUP BY protocol, eos_instance, *
+
+
+SELECT sum_total_read_bytes AS strb, sum_total_read_files AS strf, sum_total_vector_read_bytes AS stvrb, sum_total_write_bytes AS stwb, sum_total_write_files AS stwf INTO "prod"."autogen"."aggregated_data" FROM (SELECT sum(*) FROM processed_input_file GROUP BY time(1d) fill(none) tz('Europe/Paris')) GROUP BY protocol, eos_instance, *
+
+
+SELECT sum_total_read_bytes AS strb, sum_total_read_files AS strf, sum_total_vector_read_bytes AS stvrb, sum_total_write_bytes AS stwb, sum_total_write_files AS stwf INTO "prod"."autogen".:MEASUREMENT FROM (SELECT sum(*) FROM processed_input_file GROUP BY time(1d) fill(none) tz('Europe/Paris')) GROUP BY protocol, eos_instance, *
+tz('Europe/Paris')
+
+
+CREATE RETENTION POLICY one_day ON influxDB_datatransfer_monit_prod DURATION INF REPLICATION 1
+CREATE RETENTION POLICY one_week ON influxDB_datatransfer_monit_prod DURATION INF REPLICATION 1
+CREATE RETENTION POLICY one_month ON influxDB_datatransfer_monit_prod DURATION INF REPLICATION 1
+
+CREATE CONTINUOUS QUERY cq_eos_report_statistics_one_day_downsample ON influxDB_datatransfer_monit_buffer RESAMPLE EVERY 1h FOR 104w BEGIN SELECT sum(total_read_bytes) + sum(total_vector_read_bytes) AS sum_total_read_bytes, sum(total_read_files) AS sum_total_read_files, sum(total_write_bytes) AS sum_total_write_bytes, sum(total_write_files) AS sum_total_write_files INTO influxDB_datatransfer_monit_prod.one_day.eos_datatransfer FROM influxDB_datatransfer_monit_buffer.autogen.eosreports_statistics GROUP BY eos_instance, protocol, mgmhost, time(1d) fill(none) TZ('Europe/Paris') END
+CREATE CONTINUOUS QUERY "cq_eos_report_statistics_one_week_downsample" ON "influxDB_datatransfer_monit_buffer" RESAMPLE EVERY 10s FOR 52w BEGIN SELECT sum(total_read_bytes)+sum(total_vector_read_bytes) as sum_total_read_bytes, sum(total_read_files) as sum_total_read_files, sum(total_write_bytes) as sum_total_write_bytes, sum(total_write_files) as sum_total_write_files INTO "influxDB_datatransfer_monit_prod"."one_week"."eos_datatransfer" FROM influxDB_datatransfer_monit_buffer."autogen".eosreports_statistics GROUP BY eos_instance,protocol,mgmhost, time(1w) fill(none) tz('Europe/Paris') END
+CREATE CONTINUOUS QUERY "cq_eos_report_statistics_one_month_downsample" ON "influxDB_datatransfer_monit_buffer" RESAMPLE EVERY 10s FOR 52w BEGIN SELECT sum(total_read_bytes)+sum(total_vector_read_bytes) as sum_total_read_bytes, sum(total_read_files) as sum_total_read_files, sum(total_write_bytes) as sum_total_write_bytes, sum(total_write_files) as sum_total_write_files INTO "influxDB_datatransfer_monit_prod"."one_month"."eos_datatransfer" FROM influxDB_datatransfer_monit_buffer."autogen".eosreports_statistics GROUP BY eos_instance,protocol,mgmhost, time(30d) fill(none) tz('Europe/Paris') END
+
