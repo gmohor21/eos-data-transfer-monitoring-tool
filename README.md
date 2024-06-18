@@ -1,4 +1,4 @@
-# eos-transfer-monitortoring-tool
+# eos-data-transfer-monitoring-tool
 A monitoring tool designed to extract, aggregate, and visualize data transfer statistics from CERN's EOS (Exabyte Scale Object Store) Report Logs.
 
 ## Table of Contents
